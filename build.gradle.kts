@@ -1,0 +1,85 @@
+plugins {
+    kotlin("jvm") version "2.0.0"
+    id("com.gradleup.shadow") version "8.3.0"
+}
+
+group = "de.infinityprojects"
+version = "1.0.3-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    testImplementation(kotlin("test"))
+    implementation("net.minestom:minestom-snapshots:6c5cd6544e")
+    implementation("org.apache.logging.log4j:log4j-api:2.23.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.23.1")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1")
+    implementation("net.java.dev.jna:jna-platform:5.14.0")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21)) // Minestom has a minimum Java version of 21
+    }
+}
+
+tasks {
+    jar {
+        manifest {
+            attributes["Main-Class"] = "de.infinityprojects.mcserver.MainKt" // Change this to your main class
+        }
+    }
+
+    build {
+        dependsOn(shadowJar)
+    }
+
+    shadowJar {
+        mergeServiceFiles()
+        archiveClassifier.set("") // Prevent the -all suffix on the shadowjar file.
+    }
+
+    processResources {
+        /* inputs.property("group", project.group)
+        inputs.property("name", project.name)
+        inputs.property("description", project.description)
+        inputs.property("year", Calendar.getInstance().get(Calendar.YEAR))
+        inputs.property("author", "InfinityProjects")
+        inputs.property("website", "https://infinityprojects.de")
+        inputs.property("license", "MIT")
+        inputs.property("github", "")*/
+
+        val props =
+            mapOf(
+                "version" to project.version,
+            )
+
+        inputs.properties(props)
+        filteringCharset = "UTF-8"
+        filesMatching("melius.properties") {
+            expand(props)
+        }
+    }
+}
+
+task("runDev") {
+    dependsOn("shadowJar")
+    doLast {
+        javaexec {
+            mainClass = "de.infinityprojects.mcserver.MainKt"
+            classpath = files("build/libs/${project.name}-${project.version}.jar")
+            workingDir = file("run/")
+        }
+    }
+}
