@@ -1,6 +1,7 @@
 package de.infinityprojects.mcserver.config
 
 import java.io.File
+import java.util.Properties
 
 class PropertiesConfiguration(
     val fileName: String = "server.properties",
@@ -96,5 +97,13 @@ class PropertiesConfiguration(
                 }
             }
         }
+    }
+
+    fun getProperties(): Properties {
+        val properties = Properties()
+        values.forEach { (key, value) ->
+            properties[key] = value
+        }
+        return properties
     }
 }
