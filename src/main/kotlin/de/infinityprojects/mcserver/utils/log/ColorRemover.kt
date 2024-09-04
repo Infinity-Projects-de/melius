@@ -17,16 +17,14 @@ class ColorRemover : LogEventPatternConverter("ColorRemover", null) {
         if (event == null) return
         val message = event.message.formattedMessage
 
-        // remove ansi
-        val cleanMessage = message.replace("\u001B\\[[;\\d]*m".toRegex(), "")
+        val cleanMessage =
+            message
+                .replace("\u001B\\[[;\\d]*m".toRegex(), "") // remove ansi
+                .replace("§[0-9a-fA-F]".toRegex(), "") // remove mc color codes
+                .replace("§[l-oL-O]".toRegex(), "") // remove text decoration
+                .replace("§x[0-9a-fA-F]{6}".toRegex(), "") // remove rgb mc color codes
 
-        // remove mc color codes
-        val cleanMessage2 = cleanMessage.replace("§[0-9a-fA-F]".toRegex(), "")
-
-        // remove rgb mc color codes
-        val cleanMessage3 = cleanMessage2.replace("§x[0-9a-fA-F]{6}".toRegex(), "")
-
-        toAppendTo?.append(cleanMessage3)
+        toAppendTo?.append(cleanMessage)
     }
 
     companion object {
