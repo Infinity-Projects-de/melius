@@ -12,8 +12,8 @@ import net.minestom.server.utils.entity.EntityFinder
 
 class Gamemode : Command("gamemode", "gm") {
     init {
-        setDefaultExecutor { sender, _ ->
-            sender.sendMessage("Usage: /gamemode <survival|creative|adventure|spectator> [players]")
+        setDefaultExecutor { sender, context ->
+            sender.sendMessage("Usage: /${context.commandName} <survival|creative|adventure|spectator> [players]")
         }
 
         val playerArgument =
