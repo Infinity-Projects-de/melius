@@ -1,15 +1,18 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.utils.CHUNK_SAVING_THREAD_NAME
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
 import net.minestom.server.instance.InstanceContainer
 import net.minestom.server.instance.LightingChunk
 import net.minestom.server.instance.anvil.AnvilLoader
-import org.slf4j.LoggerFactory
 import java.io.File
 
 class WorldManager {
-    val logger = LoggerFactory.getLogger("WorldManager")
+    val logger = ComponentLogger.logger("WorldManager")
     val worlds = hashMapOf<String, InstanceContainer>()
     var autoSaveEnabled = false
 
@@ -54,7 +57,12 @@ class WorldManager {
             return worlds[name]!!
         }
 
-        logger.info("Creating world $name")
+        logger.info(
+            Component
+                .empty()
+                .append(Component.text("Creating world "))
+                .append(Component.text(name).color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD)),
+        )
         // Create the instance
         val instanceManager = MinecraftServer.getInstanceManager()
         val instanceContainer = instanceManager.createInstanceContainer()
