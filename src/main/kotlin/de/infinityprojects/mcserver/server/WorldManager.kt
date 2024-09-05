@@ -1,11 +1,14 @@
 package de.infinityprojects.mcserver.server
 
+import de.infinityprojects.mcserver.data.WorldSpawn
 import de.infinityprojects.mcserver.utils.CHUNK_SAVING_THREAD_NAME
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
+import net.minestom.server.coordinate.Pos
+import net.minestom.server.instance.Instance
 import net.minestom.server.instance.InstanceContainer
 import net.minestom.server.instance.LightingChunk
 import net.minestom.server.instance.anvil.AnvilLoader
@@ -94,4 +97,23 @@ class WorldManager {
     }
 
     fun getDefaultWorld(): InstanceContainer = worlds.values.first()
+
+    fun getDefaultWorldName(): String = worlds.keys.first()
+
+    fun getWorldName(instance: Instance): String =
+        worlds.entries.firstOrNull { it.value == instance }?.key
+            ?: throw IllegalArgumentException("Instance not found")
+
+    fun setSpawn(
+        instance: Instance,
+        coords: Pos,
+    ) {
+        val worldSpawn = WorldSpawn(coords)
+        instance.setTag(WorldSpawn.getTag(), worldSpawn)
+    }
+
+    fun getSpawn(instance: Instance): Pos {
+        val worldSpawn = instance.getTag(WorldSpawn.getTag())
+        return worldSpawn?.pos ?: Pos(0.0, 41.0, 0.0)
+    }
 }
