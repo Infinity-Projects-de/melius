@@ -1,11 +1,16 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
+import de.infinityprojects.mcserver.config.YamlConfiguration
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
 import de.infinityprojects.mcserver.utils.logSystemInfo
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import net.minestom.server.MinecraftServer
+import net.minestom.server.event.server.ServerListPingEvent
+import net.minestom.server.extras.lan.OpenToLAN
 import org.slf4j.LoggerFactory
+import java.io.File
 
 object MeliusServer {
     private val logger = LoggerFactory.getLogger("Server")
@@ -25,8 +30,6 @@ object MeliusServer {
 
         // CONFIG
         config.saveDefault()
-        config.load()
-        config.generateMissing()
 
         // INIT MANAGERS
         worldManager = WorldManager()
@@ -39,14 +42,40 @@ object MeliusServer {
         playerManager = PlayerManager()
         commandManager = CommandManager()
 
+        MinecraftServer.getGlobalEventHandler().addListener(ServerListPingEvent::class.java) { event ->
+            val motdString = config.getString("motd-line1") + "\n" + config.getString("motd-line2")
+            val component = LegacyComponentSerializer.legacySection().deserialize(motdString)
+            event.responseData.description = component
+        }
+
         // LISTEN TO IP AND PORT
         val ip = config.getString("server-ip")
         val port = config.getInt("server-port")
         logger.info("Starting server on $ip:$port")
         minecraftServer.start(ip, port)
 
+        if (config.getBoolean("open-to-lan")) {
+            logger.info("Opening server to LAN")
+            OpenToLAN.open()
+        }
         // TIMING
         val end = System.currentTimeMillis()
         logger.info("Server started in ${end - start}ms")
+
+        logger.debug("Generating (unused) file structure")
+        YamlConfiguration("animations.yml")
+        YamlConfiguration("scoreboard.yml")
+        YamlConfiguration("tablist.yml")
+
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                logger.info("Shutting down server")
+                logger.warn("Removing temporary player data")
+                val players = File("players")
+                if (players.exists()) {
+                    players.deleteRecursively()
+                }
+            },
+        )
     }
 }
