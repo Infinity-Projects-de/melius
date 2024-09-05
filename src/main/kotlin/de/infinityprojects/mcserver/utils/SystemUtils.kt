@@ -6,8 +6,7 @@ import org.slf4j.LoggerFactory
 
 fun logSystemInfo() {
     val logger = LoggerFactory.getLogger("SystemInfo")
-    val meliusProperties = PropertiesConfiguration("melius.properties")
-    meliusProperties.load()
+    val meliusProperties = PropertiesConfiguration("melius.properties", "/melius.properties", false)
 
     logger.info(
         "Java {} ({}) on {} {} ({})",
