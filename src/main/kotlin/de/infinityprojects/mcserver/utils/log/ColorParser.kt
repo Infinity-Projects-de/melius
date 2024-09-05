@@ -45,6 +45,7 @@ class ColorParser : LogEventPatternConverter("ColorParser", null) {
         // TODO: convert rgb mc color code to ansi
 
         toAppendTo?.append(cleanMessage)
+        toAppendTo?.append("\u001B[0m") // reset color
     }
 
     companion object {
