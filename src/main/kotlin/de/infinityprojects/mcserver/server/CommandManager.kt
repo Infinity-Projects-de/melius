@@ -1,6 +1,7 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.commands.admin.Gamemode
+import de.infinityprojects.mcserver.commands.admin.SetSpawn
 import de.infinityprojects.mcserver.commands.admin.Teleport
 import de.infinityprojects.mcserver.commands.performance.Cpu
 import de.infinityprojects.mcserver.commands.performance.Ram
@@ -30,6 +31,7 @@ class CommandManager {
                 Cpu(),
                 Threads(),
                 Teleport(),
+                SetSpawn(),
             )
 
         commands.forEach(MinecraftServer.getCommandManager()::register)
