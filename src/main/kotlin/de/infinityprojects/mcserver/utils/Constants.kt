@@ -15,3 +15,5 @@ val STARTUP_MESSAGE =
         "\u001B[38;5;206mThe best server platform available!",
         "\u001B[38;5;207mVisit us at MELIUSMC.INFO!",
     )
+const val MAX_YAML_INDENT = 10
+const val TWO_DECIMAL_FORMAT = "#.##"
