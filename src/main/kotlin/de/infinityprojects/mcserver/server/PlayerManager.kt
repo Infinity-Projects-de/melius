@@ -29,6 +29,18 @@ class PlayerManager {
     private val logger = LoggerFactory.getLogger("PlayerManager")
     private val players = hashMapOf<String, Player>() // replaceable with Audiences
     private val tempUUIDs = hashMapOf<String, UUID>()
+    private val notification =
+        Notification(
+            Component
+                .text("Welcome to $SERVER_BRAND!")
+                .color(NamedTextColor.GOLD)
+                .decorate(TextDecoration.BOLD),
+            FrameType.CHALLENGE,
+            ItemStack.of(Material.RAW_GOLD_BLOCK),
+        )
+
+    private val tablistManager = TablistManager()
+    private val scoreboardManager = ScoreboardManager()
 
     init {
         logger.error("Using temporary UUIDs for player data")
@@ -36,66 +48,65 @@ class PlayerManager {
             tempUUIDs.computeIfAbsent(username) { UUID.randomUUID() }
         }
 
-        val notification =
-            Notification(
-                Component
-                    .text("Welcome to $SERVER_BRAND!")
-                    .color(NamedTextColor.GOLD)
-                    .decorate(TextDecoration.BOLD),
-                FrameType.CHALLENGE,
-                ItemStack.of(Material.RAW_GOLD_BLOCK),
-            )
+        File("players").mkdirs()
 
         val node = EventNode.type("player_manager", EventFilter.PLAYER)
         MinecraftServer.getGlobalEventHandler().addChild(node)
 
-        node.addListener(AsyncPlayerConfigurationEvent::class.java) { event ->
-            val player = event.player
-            val playerFile = File("players/${player.uuid}.dat")
+        node.addListener(AsyncPlayerConfigurationEvent::class.java, ::configurationEvent)
+        node.addListener(PlayerSpawnEvent::class.java, ::spawnEvent)
+        node.addListener(PlayerDisconnectEvent::class.java, ::disconnectEvent)
+    }
 
-            if (playerFile.exists()) {
-                val serial = playerFile.readText()
-                val tags = TagStringIOExt.readTag(serial) as CompoundBinaryTag
-                player.tagHandler().updateContent(tags)
-            }
+    fun configurationEvent(event: AsyncPlayerConfigurationEvent) {
+        val player = event.player
+        val playerFile = File("players/${player.uuid}.dat")
 
-            val world = MeliusServer.worldManager.getDefaultWorld()
-            event.spawningInstance = world
-            val worldName = MeliusServer.worldManager.getWorldName(world)
-            player.respawnPoint = getSpawn(player, worldName)
-
-            players[player.username] = player
-            broadcast(
-                Component
-                    .empty()
-                    .append(Component.text("[+] ").color(NamedTextColor.GREEN))
-                    .append(Component.text(player.username).color(NamedTextColor.GOLD))
-                    .append(Component.text(" joined the server").color(NamedTextColor.YELLOW)),
-            )
+        if (playerFile.exists()) {
+            val serial = playerFile.readText()
+            val tags = TagStringIOExt.readTag(serial) as CompoundBinaryTag
+            player.tagHandler().updateContent(tags)
         }
 
-        node.addListener(PlayerSpawnEvent::class.java) { event ->
-            val player = event.player
-            NotificationCenter.send(notification, player)
-        }
+        val world = MeliusServer.worldManager.getDefaultWorld()
+        event.spawningInstance = world
+        val worldName = MeliusServer.worldManager.getWorldName(world)
+        player.respawnPoint = getSpawn(player, worldName)
 
-        node.addListener(PlayerDisconnectEvent::class.java) { event ->
-            players.remove(event.player.username)
-            val tags = event.player.tagHandler().asCompound()
-            val serial = TagStringIOExt.writeTag(tags)
+        players[player.username] = player
+        broadcast(
+            Component
+                .empty()
+                .append(Component.text("[+] ").color(NamedTextColor.GREEN))
+                .append(Component.text(player.username).color(NamedTextColor.GOLD))
+                .append(Component.text(" joined the server").color(NamedTextColor.YELLOW)),
+        )
+    }
 
-            val playerFile = File("players/${event.player.uuid}.dat")
+    fun spawnEvent(event: PlayerSpawnEvent) {
+        val player = event.player
+        NotificationCenter.send(notification, player)
 
-            playerFile.writeText(serial)
+        tablistManager.sendTabList(player)
+        scoreboardManager.sendScoreboard(player)
+    }
 
-            broadcast(
-                Component
-                    .empty()
-                    .append(Component.text("[-] ").color(NamedTextColor.RED))
-                    .append(Component.text(event.player.username).color(NamedTextColor.GOLD))
-                    .append(Component.text(" left the server").color(NamedTextColor.YELLOW)),
-            )
-        }
+    fun disconnectEvent(event: PlayerDisconnectEvent) {
+        players.remove(event.player.username)
+        val tags = event.player.tagHandler().asCompound()
+        val serial = TagStringIOExt.writeTag(tags)
+
+        val playerFile = File("players/${event.player.uuid}.dat")
+
+        playerFile.writeText(serial)
+
+        broadcast(
+            Component
+                .empty()
+                .append(Component.text("[-] ").color(NamedTextColor.RED))
+                .append(Component.text(event.player.username).color(NamedTextColor.GOLD))
+                .append(Component.text(" left the server").color(NamedTextColor.YELLOW)),
+        )
     }
 
     fun broadcast(message: Component) {
