@@ -1,0 +1,128 @@
+package de.infinityprojects.mcserver.server
+
+import de.infinityprojects.mcserver.data.WorldSpawn
+import de.infinityprojects.mcserver.utils.SERVER_BRAND
+import net.kyori.adventure.nbt.CompoundBinaryTag
+import net.kyori.adventure.nbt.TagStringIOExt
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import net.minestom.server.MinecraftServer
+import net.minestom.server.advancements.FrameType
+import net.minestom.server.advancements.notifications.Notification
+import net.minestom.server.advancements.notifications.NotificationCenter
+import net.minestom.server.adventure.audience.Audiences
+import net.minestom.server.coordinate.Pos
+import net.minestom.server.entity.Player
+import net.minestom.server.event.EventFilter
+import net.minestom.server.event.EventNode
+import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
+import net.minestom.server.event.player.PlayerDisconnectEvent
+import net.minestom.server.event.player.PlayerSpawnEvent
+import net.minestom.server.item.ItemStack
+import net.minestom.server.item.Material
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.util.*
+
+class PlayerManager {
+    private val logger = LoggerFactory.getLogger("PlayerManager")
+    private val players = hashMapOf<String, Player>() // replaceable with Audiences
+    private val tempUUIDs = hashMapOf<String, UUID>()
+
+    init {
+        logger.error("Using temporary UUIDs for player data")
+        MinecraftServer.getConnectionManager().setUuidProvider { _, username ->
+            tempUUIDs.computeIfAbsent(username) { UUID.randomUUID() }
+        }
+
+        val notification =
+            Notification(
+                Component
+                    .text("Welcome to $SERVER_BRAND!")
+                    .color(NamedTextColor.GOLD)
+                    .decorate(TextDecoration.BOLD),
+                FrameType.CHALLENGE,
+                ItemStack.of(Material.RAW_GOLD_BLOCK),
+            )
+
+        val node = EventNode.type("player_manager", EventFilter.PLAYER)
+        MinecraftServer.getGlobalEventHandler().addChild(node)
+
+        node.addListener(AsyncPlayerConfigurationEvent::class.java) { event ->
+            val player = event.player
+            val playerFile = File("players/${player.uuid}.dat")
+
+            if (playerFile.exists()) {
+                val serial = playerFile.readText()
+                val tags = TagStringIOExt.readTag(serial) as CompoundBinaryTag
+                player.tagHandler().updateContent(tags)
+            }
+
+            val world = MeliusServer.worldManager.getDefaultWorld()
+            event.spawningInstance = world
+            val worldName = MeliusServer.worldManager.getWorldName(world)
+            player.respawnPoint = getSpawn(player, worldName)
+
+            players[player.username] = player
+            broadcast(
+                Component
+                    .empty()
+                    .append(Component.text("[+] ").color(NamedTextColor.GREEN))
+                    .append(Component.text(player.username).color(NamedTextColor.GOLD))
+                    .append(Component.text(" joined the server").color(NamedTextColor.YELLOW)),
+            )
+        }
+
+        node.addListener(PlayerSpawnEvent::class.java) { event ->
+            val player = event.player
+            NotificationCenter.send(notification, player)
+        }
+
+        node.addListener(PlayerDisconnectEvent::class.java) { event ->
+            players.remove(event.player.username)
+            val tags = event.player.tagHandler().asCompound()
+            val serial = TagStringIOExt.writeTag(tags)
+
+            val playerFile = File("players/${event.player.uuid}.dat")
+
+            playerFile.writeText(serial)
+
+            broadcast(
+                Component
+                    .empty()
+                    .append(Component.text("[-] ").color(NamedTextColor.RED))
+                    .append(Component.text(event.player.username).color(NamedTextColor.GOLD))
+                    .append(Component.text(" left the server").color(NamedTextColor.YELLOW)),
+            )
+        }
+    }
+
+    fun broadcast(message: Component) {
+        Audiences.all().sendMessage(message)
+    }
+
+    fun setSpawn(
+        player: Player,
+        worldName: String,
+        coords: Pos,
+    ) {
+        val worldSpawn = WorldSpawn(coords)
+        player.setTag(WorldSpawn.getTag(worldName), worldSpawn)
+    }
+
+    fun getSpawn(
+        player: Player,
+        worldName: String,
+    ): Pos {
+        val worldSpawn = player.getTag(WorldSpawn.getTag(worldName))
+
+        if (worldSpawn == null) {
+            val world = MeliusServer.worldManager.getWorld(worldName) ?: throw IllegalArgumentException("World not found")
+            val spawn = MeliusServer.worldManager.getSpawn(world)
+            return spawn
+        }
+
+        return worldSpawn.pos
+    }
+}

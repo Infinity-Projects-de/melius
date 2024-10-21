@@ -1,0 +1,23 @@
+board1:
+  enabled: true
+  title:
+    - "§6§lMelius"
+  content:
+    - "§dThe best server"
+    - "§dplatform"
+    - "§7Visit meliusmc.info"
+    - "§7for more information"
+    - ""
+  visible: default
+
+board2:
+  enabled: false
+  title:
+    - "MyServer2"
+  content:
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+  visible: admin

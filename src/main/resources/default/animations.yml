@@ -1,0 +1,21 @@
+animation1: #change the name how u want. use for example %animation1% to use this in other configs
+  time: 20 #in ticks
+  content:
+    - ""
+    - ""
+    - ""
+    - ""
+animation2:
+  time: 20 #in ticks
+  content:
+    - ""
+    - ""
+    - ""
+    - ""
+animation3:
+  time: 20 #in ticks
+  content:
+    - ""
+    - ""
+    - ""
+    - ""

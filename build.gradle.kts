@@ -1,10 +1,12 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
+
 plugins {
     kotlin("jvm") version "2.0.0"
     id("com.gradleup.shadow") version "8.3.0"
 }
 
 group = "de.infinityprojects"
-version = "1.0.3-SNAPSHOT"
+version = "1.0.4-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -15,9 +17,14 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("net.minestom:minestom-snapshots:6c5cd6544e")
     implementation("org.apache.logging.log4j:log4j-api:2.23.1")
-    implementation("org.apache.logging.log4j:log4j-core:2.23.1")
+    // implementation("org.apache.logging.log4j:log4j-core:2.23.1")
+    annotationProcessor("org.apache.logging.log4j:log4j-core:2.23.1")
     implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1")
-    implementation("net.java.dev.jna:jna-platform:5.14.0")
+    implementation("net.java.dev.jna:jna:5.14.0")
+    implementation("net.minecrell:terminalconsoleappender:1.3.0")
+    implementation("org.jline:jline-terminal:3.26.3")
+    implementation("org.jline:jline-reader:3.26.3")
+    implementation("org.jline:jline-terminal-jna:3.26.3")
 }
 
 tasks.test {
@@ -48,6 +55,7 @@ tasks {
     shadowJar {
         mergeServiceFiles()
         archiveClassifier.set("") // Prevent the -all suffix on the shadowjar file.
+        transform(Log4j2PluginsCacheFileTransformer::class.java)
     }
 
     processResources {

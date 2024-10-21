@@ -5,16 +5,15 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.Command
 import net.minestom.server.command.builder.arguments.ArgumentType
-import net.minestom.server.entity.Entity
+import net.minestom.server.command.builder.arguments.ArgumentType.Literal
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
 import net.minestom.server.utils.entity.EntityFinder
-import net.minestom.server.command.builder.arguments.ArgumentType.Literal as Literal
 
 class Gamemode : Command("gamemode", "gm") {
     init {
-        setDefaultExecutor { sender, _ ->
-            sender.sendMessage("Usage: /gamemode <survival|creative|adventure|spectator> [players]")
+        setDefaultExecutor { sender, context ->
+            sender.sendMessage("Usage: /${context.commandName} <survival|creative|adventure|spectator> [players]")
         }
 
         val playerArgument =

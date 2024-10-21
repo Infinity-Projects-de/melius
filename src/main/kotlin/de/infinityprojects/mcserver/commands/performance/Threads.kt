@@ -37,6 +37,13 @@ class Threads : Command("threads") {
 
         setDefaultExecutor { sender, _ ->
             val threads = Thread.getAllStackTraces()
+
+            sender.sendMessage(
+                Component
+                    .empty()
+                    .append(Component.text("Hardware threads: ${Runtime.getRuntime().availableProcessors()}"))
+                    .color(NamedTextColor.GRAY),
+            )
             sender.sendMessage(
                 Component
                     .empty()
@@ -44,12 +51,39 @@ class Threads : Command("threads") {
                     .color(NamedTextColor.GRAY),
             )
 
-            for ((thread, _) in threads) {
+            val grouped = groupByCommonParts(threads.keys.toList())
+
+            for ((name, threads) in grouped) {
+                val responsible = threads[0]
                 sender.sendMessage(
                     Component
                         .empty()
-                        .append(Component.text(thread.name))
-                        .color(NamedTextColor.GRAY),
+                        .append(Component.text(name).color(NamedTextColor.GRAY))
+                        .let {
+                            if (threads.size > 1) {
+                                it.append(Component.text(" (${threads.size} threads)").color(NamedTextColor.GREEN))
+                            } else {
+                                it
+                            }
+                        }.let {
+                            if (responsible.isDaemon) {
+                                it.append(Component.text(" (daemon)").color(NamedTextColor.BLUE))
+                            } else {
+                                it
+                            }
+                        }.let {
+                            if (!responsible.isAlive) {
+                                it.append(Component.text(" (dead)").color(NamedTextColor.RED))
+                            } else {
+                                it
+                            }
+                        }.let {
+                            if (responsible.isVirtual) {
+                                it.append(Component.text(" (virtual)").color(NamedTextColor.AQUA))
+                            } else {
+                                it
+                            }
+                        },
                 )
             }
         }
@@ -59,5 +93,23 @@ class Threads : Command("threads") {
                 toggleBar(sender, bar)
             }
         }, ArgumentType.Literal("bar"))
+    }
+
+    fun groupByCommonParts(threads: List<Thread>): Map<String, MutableList<Thread>> {
+        val grouped = mutableMapOf<String, MutableList<Thread>>()
+        for (thread in threads) {
+            val name = thread.name
+            val withoutLastChar = name.substring(0, name.length - 2)
+
+            val list = grouped.computeIfAbsent(withoutLastChar) { mutableListOf() }
+            list.add(thread)
+        }
+        for ((name, list) in grouped.filter { it.value.size == 1 }) {
+            val thread = list[0]
+            grouped.remove(name)
+            grouped.computeIfAbsent(thread.name) { mutableListOf() }.add(thread)
+        }
+
+        return grouped
     }
 }

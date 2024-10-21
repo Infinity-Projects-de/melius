@@ -40,23 +40,18 @@ class Cpu : Command("cpu") {
         thread.start()
 
         MinecraftServer.getSchedulerManager().submitTask {
-            val totals = getTotalPercentage(current)
+            var totals = 0f
+            for (data in current) {
+                totals += data.cpuPercentage
+            }
 
-            val progress = (totals.totalCpu / 100).coerceAtMost(1f)
+            val progress = (totals / 100).coerceAtMost(1f)
 
             val text =
                 Component
                     .empty()
                     .append(Component.text("CPU: ").color(NamedTextColor.GRAY))
-                    .append(Component.text(f.format(totals.totalCpu)).color(Ram.getColor(progress, false)))
-                    .append(Component.text("% User: ").color(NamedTextColor.GRAY))
-                    .append(Component.text(f.format(totals.totalUser)).color(Ram.getColor(totals.totalUser / 100, false)))
-                    .append(Component.text("% Blocked: ").color(NamedTextColor.GRAY))
-                    .append(Component.text(f.format(totals.totalBlocked)).color(Ram.getColor(totals.totalBlocked / 100, false)))
-                    .append(Component.text("% Waited: ").color(NamedTextColor.GRAY))
-                    .append(Component.text(f.format(totals.totalWaited)).color(Ram.getColor(totals.totalWaited / 100, false)))
-                    .append(Component.text("%").color(NamedTextColor.GRAY))
-
+                    .append(Component.text("${f.format(totals)}%").color(Ram.getColor(progress, false)))
             bar.name(text)
             bar.progress(progress)
             bar.color(Ram.getBarColor(progress, false))
@@ -93,18 +88,18 @@ class Cpu : Command("cpu") {
         showAll: Boolean,
         current: List<ThreadData>,
     ) {
-        val totals = getTotalPercentage(current)
-        sender.sendMessage(
-            Component
-                .empty()
-                .append(Component.text("Total CPU: ${f.format(totals.totalCpu)}%").color(NamedTextColor.GREEN))
-                .append(Component.text(" User: ${f.format(totals.totalUser)}%").color(NamedTextColor.AQUA))
-                .append(Component.text(" Blocked: ${f.format(totals.totalBlocked)}%").color(NamedTextColor.RED))
-                .append(Component.text(" Waited: ${f.format(totals.totalWaited)}%").color(NamedTextColor.YELLOW)),
-        )
+        var totalCpu = 0f
+        var totalUser = 0f
+        var totalBlocked = 0f
+        var totalWaited = 0f
 
         var notShown = 0
-        for (data in current) {
+        for (data in current.sortedBy { it.cpuPercentage }) {
+            totalCpu += data.cpuPercentage
+            totalUser += data.userPercentage
+            totalBlocked += data.blockedPercentage
+            totalWaited += data.waitedPercentage
+
             if (data.cpuPercentage == 0f && !showAll) {
                 notShown++
                 continue
@@ -112,39 +107,22 @@ class Cpu : Command("cpu") {
             sender.sendMessage(
                 Component
                     .empty()
-                    .append(Component.text(data.name).color(NamedTextColor.GRAY))
-                    .append(Component.text(" CPU: ${f.format(data.cpuPercentage)}%").color(NamedTextColor.GREEN))
-                    .append(Component.text(" User: ${f.format(data.userPercentage)}%").color(NamedTextColor.AQUA))
-                    .append(Component.text(" Blocked: ${f.format(data.blockedPercentage)}%").color(NamedTextColor.RED))
-                    .append(Component.text(" Waited: ${f.format(data.waitedPercentage)}%").color(NamedTextColor.YELLOW)),
+                    .append(Component.text("${f.format(data.cpuPercentage)}% ").color(NamedTextColor.GREEN))
+                    .append(Component.text(data.name).color(NamedTextColor.GRAY)),
             )
         }
 
         if (notShown > 0) {
             sender.sendMessage(Component.text("Not shown (0% CPU): $notShown").color(NamedTextColor.GRAY))
         }
-    }
 
-    private data class Totals(
-        val totalCpu: Float,
-        val totalUser: Float,
-        val totalBlocked: Float,
-        val totalWaited: Float,
-    )
-
-    companion object {
-        private fun getTotalPercentage(threads: List<ThreadData>): Totals {
-            var totalCpu = 0f
-            var totalUser = 0f
-            var totalBlocked = 0f
-            var totalWaited = 0f
-            for (data in threads) {
-                totalCpu += data.cpuPercentage
-                totalUser += data.userPercentage
-                totalBlocked += data.blockedPercentage
-                totalWaited += data.waitedPercentage
-            }
-            return Totals(totalCpu, totalUser, totalBlocked, totalWaited)
-        }
+        sender.sendMessage(
+            Component
+                .empty()
+                .append(Component.text("Total CPU: ${f.format(totalCpu)}%").color(NamedTextColor.GREEN))
+                .append(Component.text(" User: ${f.format(totalUser)}%").color(NamedTextColor.GRAY))
+                .append(Component.text(" Blocked: ${f.format(totalBlocked)}%").color(NamedTextColor.GRAY))
+                .append(Component.text(" Waited: ${f.format(totalWaited)}%").color(NamedTextColor.GRAY)),
+        )
     }
 }
