@@ -21,6 +21,11 @@ object MeliusServer {
 
     fun init() {
         val start = System.currentTimeMillis()
+        Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            logger.error("An uncaught exception happened, you can find more details in the debug file: {}", e.toString())
+            logger.debug("Start of stacktrace", e)
+        }
+
         val minecraftServer = MinecraftServer.init()
         MinecraftServer.setBrandName(SERVER_BRAND)
 
