@@ -1,7 +1,7 @@
 package de.infinityprojects.mcserver.server
 
+import de.infinityprojects.mcserver.config.FileConfiguration
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
-import de.infinityprojects.mcserver.config.YamlConfiguration
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
 import de.infinityprojects.mcserver.utils.logSystemInfo
@@ -17,6 +17,7 @@ object MeliusServer {
     lateinit var worldManager: WorldManager
     lateinit var playerManager: PlayerManager
     lateinit var commandManager: CommandManager
+    lateinit var chatManager: ChatManager
     val config = PropertiesConfiguration()
 
     fun init() {
@@ -45,6 +46,7 @@ object MeliusServer {
         worldManager.createWorld("world")
 
         playerManager = PlayerManager()
+        chatManager = ChatManager()
         commandManager = CommandManager()
 
         MinecraftServer.getGlobalEventHandler().addListener(ServerListPingEvent::class.java) { event ->
@@ -68,9 +70,9 @@ object MeliusServer {
         logger.info("Server started in ${end - start}ms")
 
         logger.debug("Generating (unused) file structure")
-        YamlConfiguration("animations.yml")
-        YamlConfiguration("scoreboard.yml")
-        YamlConfiguration("tablist.yml")
+        saveDefault("animations.yml")
+        saveDefault("scoreboard.yml")
+        saveDefault("tablist.yml")
 
         Runtime.getRuntime().addShutdownHook(
             Thread {
@@ -82,5 +84,20 @@ object MeliusServer {
                 }
             },
         )
+    }
+
+    fun saveDefault(fileName: String) {
+        val file = File(fileName)
+        if (file.exists()) {
+            return
+        }
+
+        val defaultFile = javaClass.getResourceAsStream("/default/$fileName")
+            ?: throw IllegalArgumentException("Resource not found: $fileName")
+        defaultFile.use { inputStream ->
+            file.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
     }
 }
