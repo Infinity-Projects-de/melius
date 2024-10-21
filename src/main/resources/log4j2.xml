@@ -2,9 +2,9 @@
 <Configuration status="INFO" monitorInterval="30" packages="de.infinityprojects.mcserver.utils.log">
     <Properties>
         <Property name="CONSOLE_LOG_PATTERN">%style{[%d{HH:mm:ss}]}{default} %highlight{%-5p}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green,
-            DEBUG=bright_blue bold, TRACE=blue} %clp{%m}%n
+            DEBUG=bright_blue bold, TRACE=blue} %highlight{%clp{%m}%n}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=default, DEBUG=default, TRACE=default}
         </Property>
-        <Property name="FILE_LOG_PATTERN">[%d{dd/MM/yyyy HH:mm:ss}] %clr{%-5p [%t] (%c{2}): %m}%n</Property>
+        <Property name="FILE_LOG_PATTERN">[%d{dd/MM/yyyy HH:mm:ss}] %-5p %clr{[%t] (%c{2}): %m}%n</Property>
     </Properties>
 
     <Appenders>
@@ -49,10 +49,10 @@
     </Appenders>
 
     <Loggers>
-        <Root level="debug">
+        <Root level="trace">
             <AppenderRef ref="console" level="info"/>
             <AppenderRef ref="file-log" level="info"/>
-            <AppenderRef ref="debug-log" level="debug"/>
+            <AppenderRef ref="debug-log" level="trace"/>
         </Root>
     </Loggers>
 </Configuration>
