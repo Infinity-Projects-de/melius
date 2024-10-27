@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.infinityprojects"
-version = "1.0.4-SNAPSHOT"
+version = "1.0.5.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -25,6 +25,7 @@ dependencies {
     implementation("org.jline:jline-terminal:3.26.3")
     implementation("org.jline:jline-reader:3.26.3")
     implementation("org.jline:jline-terminal-jna:3.26.3")
+    implementation("org.yaml:snakeyaml:2.2")
 }
 
 tasks.test {

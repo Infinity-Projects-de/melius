@@ -22,184 +22,92 @@ class Teleport : Command("teleport", "tp") {
             sender.sendMessage(Component.text("Correct usage: /teleport <player> <player/coords/world>..."))
         }
 
-        val targets = ArgumentType.Entity("player").onlyPlayers(false).singleEntity(false)
-        val destination = ArgumentType.Entity("target").onlyPlayers(false).singleEntity(true)
-
-        val coordsArg = ArgumentType.RelativeBlockPosition("coords")
-
-        val worldArg =
-            ArgumentType
-                .String("world")
-                .setSuggestionCallback { sender, context, suggestion ->
-                    MeliusServer.worldManager.worlds.keys
-                        .forEach { suggestion.addEntry(SuggestionEntry(it)) }
-                }.setDefaultValue { sender -> if (sender is Player) sender.instance.dimensionName else null }
+        val destinationEntity = ArgumentType.Entity("destination").onlyPlayers(false).singleEntity(true)
 
         addSyntax({ sender, context ->
-            val dest = getDestination(sender, context, destination) ?: return@addSyntax
+            val dest = context.get(destinationEntity).find(sender).firstOrNull()
+            if (dest == null) {
+                sender.sendMessage(Component.text("Destination entity not found").color(NamedTextColor.RED))
+                return@addSyntax
+            }
             if (sender is Player) {
-                teleport(sender, listOf(sender), dest)
+                if (sender.instance != dest.instance) sender.setInstance(dest.instance)
+                sender.teleport(dest.position)
             } else {
                 sender.sendMessage(Component.text("Only players can teleport to a destination").color(NamedTextColor.RED))
             }
-        }, destination)
+        }, destinationEntity)
+
+        val destinationCoords = ArgumentType.RelativeBlockPosition("coords")
+        val worldArgument = ArgumentType
+            .String("world")
+            .setSuggestionCallback { sender, context, suggestion ->
+                MeliusServer.worldManager.worlds.keys
+                    .forEach { suggestion.addEntry(SuggestionEntry(it)) }
+            }.setDefaultValue { sender -> if (sender is Player) sender.instance.dimensionName else null }
 
         addSyntax({ sender, context ->
-            val targetEntities = getTargets(sender, context, targets)
-            val dest = getDestination(sender, context, destination) ?: return@addSyntax
-            teleport(sender, targetEntities, dest)
-        }, targets, destination)
-
-        addSyntax({ sender, context ->
-            val coords = context.get(coordsArg).fromSender(sender).asPosition()
-            val world = getWorld(sender, context, worldArg) ?: return@addSyntax
+            val coords = context.get(destinationCoords).fromSender(sender).asPosition()
+            val world = MeliusServer.worldManager.getWorld(context.get(worldArgument))
+            if (world == null) {
+                sender.sendMessage(Component.text("World not found").color(NamedTextColor.RED))
+                return@addSyntax
+            }
             if (sender is Player) {
-                teleport(sender, listOf(sender), coords, world)
+                if (sender.instance != world) sender.setInstance(world)
+                sender.teleport(coords)
             } else {
                 sender.sendMessage(Component.text("Only players can teleport to a location").color(NamedTextColor.RED))
             }
-        }, coordsArg, worldArg)
+        }, destinationCoords, worldArgument)
+
+        val targets = ArgumentType.Entity("target").onlyPlayers(false).singleEntity(false)
 
         addSyntax({ sender, context ->
-            val targetEntities = getTargets(sender, context, targets)
-            val coords = context.get(coordsArg).fromSender(sender).asPosition()
-            val world = getWorld(sender, context, worldArg) ?: return@addSyntax
-            teleport(sender, targetEntities, coords, world)
-        }, targets, coordsArg, worldArg)
-    }
+            val targetEntities = context.get(targets).find(sender)
+            val dest = context.get(destinationEntity).find(sender).firstOrNull()
 
-    private fun teleport(
-        sender: CommandSender,
-        targets: List<Entity>,
-        destination: Entity,
-    ) {
-        val name = if (destination is Player) destination.username else destination.entityType.name()
-        targets.forEach {
-            it.teleport(destination.position)
-            if (it is Player) {
-                it.sendMessage(
-                    Component
-                        .empty()
-                        .append(Component.text("Teleported to ", NamedTextColor.YELLOW))
-                        .append(Component.text(name, NamedTextColor.GOLD)),
-                )
+            if (dest == null) {
+                sender.sendMessage(Component.text("Destination entity not found").color(NamedTextColor.RED))
+                return@addSyntax
             }
-        }
 
-        val targetName =
-            if (targets.size == 1) {
-                val target = targets.first()
-                if (target is Player) {
-                    target.username
-                } else {
-                    target.entityType.name()
+            targetEntities.forEach {
+                if (it.instance != dest.instance) it.setInstance(dest.instance)
+                it.teleport(dest.position)
+                if (it is Player) {
+                    val name = if (dest is Player) dest.username else dest.entityType.name()
+                    it.sendMessage(
+                        Component
+                            .empty()
+                            .append(Component.text("Teleported to ", NamedTextColor.YELLOW))
+                            .append(Component.text(name, NamedTextColor.GOLD)),
+                    )
                 }
-            } else {
-                "${targets.size} entities"
+            }
+        })
+
+        addSyntax({ sender, context ->
+            val targetEntities = context.get(targets).find(sender)
+            val coords = context.get(destinationCoords).fromSender(sender).asPosition()
+            val world = MeliusServer.worldManager.getWorld(context.get(worldArgument))
+            if (world == null) {
+                sender.sendMessage(Component.text("World not found").color(NamedTextColor.RED))
+                return@addSyntax
             }
 
-        val message =
-            Component
-                .empty()
-                .append(Component.text("Teleported ", NamedTextColor.YELLOW))
-                .append(Component.text(targetName, NamedTextColor.GOLD))
-                .append(Component.text(" to ", NamedTextColor.YELLOW))
-                .append(Component.text(name, NamedTextColor.GOLD))
-
-        MinecraftServer.getCommandManager().consoleSender.sendMessage(message)
-        if ((targets.size != 1 || targets.first() != sender)) {
-            if (sender != MinecraftServer.getCommandManager().consoleSender) {
-                sender.sendMessage(message)
-            }
-        }
-    }
-
-    private fun teleport(
-        sender: CommandSender,
-        targets: List<Entity>,
-        position: Pos,
-        world: Instance?,
-    ) {
-        targets.forEach {
-            if (world != null && it.instance != world) {
-                it.setInstance(world)
-            }
-            it.teleport(position)
-            if (it is Player) {
-                it.sendMessage(
-                    Component
-                        .empty()
-                        .append(Component.text("Teleported to ", NamedTextColor.YELLOW))
-                        .append(Component.text("${position.blockX()} ${position.blockY()} ${position.blockZ()}", NamedTextColor.GOLD)),
-                )
-            }
-        }
-
-        val targetName =
-            if (targets.size == 1) {
-                val target = targets.first()
-                if (target is Player) {
-                    target.username
-                } else {
-                    target.entityType.name()
+            targetEntities.forEach {
+                if (it.instance != world) it.setInstance(world)
+                it.teleport(coords)
+                if (it is Player) {
+                    it.sendMessage(
+                        Component
+                            .empty()
+                            .append(Component.text("Teleported to ", NamedTextColor.YELLOW))
+                            .append(Component.text("${coords.blockX()} ${coords.blockY()} ${coords.blockZ()}", NamedTextColor.GOLD)),
+                    )
                 }
-            } else {
-                "${targets.size} entities"
             }
-
-        val message =
-            Component
-                .empty()
-                .append(Component.text("Teleported ", NamedTextColor.YELLOW))
-                .append(Component.text(targetName, NamedTextColor.GOLD))
-                .append(Component.text(" to ", NamedTextColor.YELLOW))
-                .append(Component.text("${position.blockX()} ${position.blockY()} ${position.blockZ()}", NamedTextColor.GOLD))
-
-        MinecraftServer.getCommandManager().consoleSender.sendMessage(message)
-        if ((targets.size != 1 || targets.first() != sender)) {
-            if (sender != MinecraftServer.getCommandManager().consoleSender) {
-                sender.sendMessage(message)
-            }
-        }
-    }
-
-    private fun getDestination(
-        sender: CommandSender,
-        context: CommandContext,
-        argument: ArgumentEntity,
-    ): Entity? {
-        val destination = context.get(argument).find(sender).firstOrNull()
-        if (destination == null) {
-            sender.sendMessage(Component.text("Destination not found").color(NamedTextColor.RED))
-            return null
-        }
-        return destination
-    }
-
-    private fun getTargets(
-        sender: CommandSender,
-        context: CommandContext,
-        argument: ArgumentEntity,
-    ): List<Entity> {
-        val targets = context.get(argument).find(sender)
-        if (targets.isEmpty()) {
-            sender.sendMessage(Component.text("No targets found").color(NamedTextColor.RED))
-            return emptyList()
-        }
-        return targets
-    }
-
-    private fun getWorld(
-        sender: CommandSender,
-        context: CommandContext,
-        argument: Argument<String>,
-    ): Instance? {
-        val worldName = context.get(argument)
-        val world = MeliusServer.worldManager.getWorld(worldName)
-        if (world == null) {
-            sender.sendMessage(Component.text("World $worldName not found").color(NamedTextColor.RED))
-            return null
-        }
-        return world
+        }, targets, destinationCoords, worldArgument)
     }
 }

@@ -1,7 +1,6 @@
 board1:
   enabled: true
-  title:
-    - "§6§lMelius"
+  title: "§6§lMelius"
   content:
     - "§dThe best server"
     - "§dplatform"
@@ -12,8 +11,7 @@ board1:
 
 board2:
   enabled: false
-  title:
-    - "MyServer2"
+  title: "MyServer2"
   content:
     - ""
     - ""

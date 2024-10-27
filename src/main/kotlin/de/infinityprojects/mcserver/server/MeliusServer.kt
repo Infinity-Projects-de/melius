@@ -1,7 +1,6 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
-import de.infinityprojects.mcserver.config.YamlConfiguration
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
 import de.infinityprojects.mcserver.utils.logSystemInfo
@@ -17,10 +16,16 @@ object MeliusServer {
     lateinit var worldManager: WorldManager
     lateinit var playerManager: PlayerManager
     lateinit var commandManager: CommandManager
+    lateinit var chatManager: ChatManager
     val config = PropertiesConfiguration()
 
     fun init() {
         val start = System.currentTimeMillis()
+        Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            logger.error("An uncaught exception happened, you can find more details in the debug file: {}", e.toString())
+            logger.debug("Start of stacktrace", e)
+        }
+
         val minecraftServer = MinecraftServer.init()
         MinecraftServer.setBrandName(SERVER_BRAND)
 
@@ -31,6 +36,10 @@ object MeliusServer {
         // CONFIG
         config.saveDefault()
 
+        saveDefault("animations.yml")
+        saveDefault("scoreboard.yml")
+        saveDefault("tablist.yml")
+
         // INIT MANAGERS
         worldManager = WorldManager()
         if (config.getBoolean("auto-save")) {
@@ -40,6 +49,7 @@ object MeliusServer {
         worldManager.createWorld("world")
 
         playerManager = PlayerManager()
+        chatManager = ChatManager()
         commandManager = CommandManager()
 
         MinecraftServer.getGlobalEventHandler().addListener(ServerListPingEvent::class.java) { event ->
@@ -62,11 +72,6 @@ object MeliusServer {
         val end = System.currentTimeMillis()
         logger.info("Server started in ${end - start}ms")
 
-        logger.debug("Generating (unused) file structure")
-        YamlConfiguration("animations.yml")
-        YamlConfiguration("scoreboard.yml")
-        YamlConfiguration("tablist.yml")
-
         Runtime.getRuntime().addShutdownHook(
             Thread {
                 logger.info("Shutting down server")
@@ -77,5 +82,20 @@ object MeliusServer {
                 }
             },
         )
+    }
+
+    fun saveDefault(fileName: String) {
+        val file = File(fileName)
+        if (file.exists()) {
+            return
+        }
+
+        val defaultFile = javaClass.getResourceAsStream("/default/$fileName")
+            ?: throw IllegalArgumentException("Resource not found: $fileName")
+        defaultFile.use { inputStream ->
+            file.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
     }
 }
