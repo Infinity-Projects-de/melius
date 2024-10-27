@@ -1,7 +1,6 @@
 package de.infinityprojects.mcserver.server
 
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.entity.Player
 import net.minestom.server.scoreboard.Sidebar
 import org.yaml.snakeyaml.Yaml
@@ -9,8 +8,6 @@ import java.io.File
 
 class ScoreboardManager {
     val sidebars: HashMap<String, Sidebar> = hashMapOf()
-    val logger = ComponentLogger.logger("ScoreboardManager")
-
 
     init {
         val yaml = Yaml()
@@ -35,7 +32,6 @@ class ScoreboardManager {
                         val sidebar = Sidebar(Component.text(title))
                         var i = lines.size - 1
                         lines.forEach {
-                            logger.error("$i: line_$i - $it")
                             sidebar.createLine(
                                 Sidebar.ScoreboardLine(
                                     "line_$i",

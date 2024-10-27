@@ -1,6 +1,5 @@
 package de.infinityprojects.mcserver.server
 
-import de.infinityprojects.mcserver.config.FileConfiguration
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
@@ -37,6 +36,10 @@ object MeliusServer {
         // CONFIG
         config.saveDefault()
 
+        saveDefault("animations.yml")
+        saveDefault("scoreboard.yml")
+        saveDefault("tablist.yml")
+
         // INIT MANAGERS
         worldManager = WorldManager()
         if (config.getBoolean("auto-save")) {
@@ -68,11 +71,6 @@ object MeliusServer {
         // TIMING
         val end = System.currentTimeMillis()
         logger.info("Server started in ${end - start}ms")
-
-        logger.debug("Generating (unused) file structure")
-        saveDefault("animations.yml")
-        saveDefault("scoreboard.yml")
-        saveDefault("tablist.yml")
 
         Runtime.getRuntime().addShutdownHook(
             Thread {
