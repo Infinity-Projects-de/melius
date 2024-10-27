@@ -1,9 +1,11 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
+import de.infinityprojects.mcserver.entity.vehicle.VehicleHandler
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
 import de.infinityprojects.mcserver.utils.logSystemInfo
+import de.infinityprojects.mcserver.world.WorldManager
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import net.minestom.server.MinecraftServer
 import net.minestom.server.event.server.ServerListPingEvent
@@ -51,7 +53,9 @@ object MeliusServer {
         playerManager = PlayerManager()
         chatManager = ChatManager()
         commandManager = CommandManager()
+        VehicleHandler()
 
+        // MOTD
         MinecraftServer.getGlobalEventHandler().addListener(ServerListPingEvent::class.java) { event ->
             val motdString = config.getString("motd-line1") + "\n" + config.getString("motd-line2")
             val component = LegacyComponentSerializer.legacySection().deserialize(motdString)
@@ -72,6 +76,7 @@ object MeliusServer {
         val end = System.currentTimeMillis()
         logger.info("Server started in ${end - start}ms")
 
+        // SHUTDOWN LOGIC
         Runtime.getRuntime().addShutdownHook(
             Thread {
                 logger.info("Shutting down server")
