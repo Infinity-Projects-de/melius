@@ -1,4 +1,4 @@
-package de.infinityprojects.mcserver.server
+package de.infinityprojects.mcserver.ui
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent

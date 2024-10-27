@@ -1,10 +1,11 @@
-package de.infinityprojects.mcserver.server
+package de.infinityprojects.mcserver.ui
 
 import net.kyori.adventure.text.Component
 import net.minestom.server.entity.Player
 import net.minestom.server.scoreboard.Sidebar
 import org.yaml.snakeyaml.Yaml
 import java.io.File
+import kotlin.collections.get
 
 class ScoreboardManager {
     val sidebars: HashMap<String, Sidebar> = hashMapOf()

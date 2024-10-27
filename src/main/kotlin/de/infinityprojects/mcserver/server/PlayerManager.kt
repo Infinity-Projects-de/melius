@@ -1,6 +1,8 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.data.WorldSpawn
+import de.infinityprojects.mcserver.ui.ScoreboardManager
+import de.infinityprojects.mcserver.ui.TablistManager
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import net.kyori.adventure.nbt.CompoundBinaryTag
 import net.kyori.adventure.nbt.TagStringIOExt
