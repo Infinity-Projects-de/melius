@@ -3,18 +3,10 @@ package de.infinityprojects.mcserver.commands.admin
 import de.infinityprojects.mcserver.server.MeliusServer
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import net.minestom.server.MinecraftServer
-import net.minestom.server.command.CommandSender
 import net.minestom.server.command.builder.Command
-import net.minestom.server.command.builder.CommandContext
-import net.minestom.server.command.builder.arguments.Argument
 import net.minestom.server.command.builder.arguments.ArgumentType
-import net.minestom.server.command.builder.arguments.minecraft.ArgumentEntity
 import net.minestom.server.command.builder.suggestion.SuggestionEntry
-import net.minestom.server.coordinate.Pos
-import net.minestom.server.entity.Entity
 import net.minestom.server.entity.Player
-import net.minestom.server.instance.Instance
 
 class Teleport : Command("teleport", "tp") {
     init {
