@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.infinityprojects"
-version = "1.0.5.1-SNAPSHOT"
+version = "1.0.6-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("net.minestom:minestom-snapshots:6c5cd6544e")
+    implementation("net.minestom:minestom-snapshots:1_21_2-805e83b0a2")
     implementation("org.apache.logging.log4j:log4j-api:2.23.1")
     // implementation("org.apache.logging.log4j:log4j-core:2.23.1")
     annotationProcessor("org.apache.logging.log4j:log4j-core:2.23.1")
