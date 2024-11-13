@@ -44,3 +44,6 @@ bin/
 run
 
 .kotlin
+
+debug
+logs

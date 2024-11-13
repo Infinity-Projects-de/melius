@@ -1,4 +1,4 @@
-package de.infinityprojects.mcserver.server
+package de.infinityprojects.mcserver.world
 
 import de.infinityprojects.mcserver.data.WorldSpawn
 import de.infinityprojects.mcserver.utils.CHUNK_SAVING_THREAD_NAME
@@ -8,6 +8,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
 import net.minestom.server.coordinate.Pos
+import net.minestom.server.event.EventNode
 import net.minestom.server.instance.Instance
 import net.minestom.server.instance.InstanceContainer
 import net.minestom.server.instance.LightingChunk
@@ -32,6 +33,9 @@ class WorldManager {
                 }
             }
         }
+
+        val node = EventNode.all("world_manager")
+        MinecraftServer.getGlobalEventHandler().addChild(node)
     }
 
     fun autoSave(enable: Boolean) {
