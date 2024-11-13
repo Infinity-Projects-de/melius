@@ -15,14 +15,12 @@ class ChatManager {
 
         node.addListener(PlayerChatEvent::class.java) { event ->
             val player = event.player
-            val message = event.message
-            event.setChatFormat { e ->
-                var comp = Component.text()
-                comp = comp.append(Component.text("${player.username}: ").color(NamedTextColor.GRAY))
-                val parsed = LegacyComponentSerializer.legacyAmpersand().deserialize(message)
-                comp = comp.append(parsed)
-                return@setChatFormat comp.build()
-            }
+            val message = event.rawMessage
+            var comp = Component.text()
+            comp = comp.append(Component.text("${player.username}: ").color(NamedTextColor.GRAY))
+            val parsed = LegacyComponentSerializer.legacyAmpersand().deserialize(message)
+            comp = comp.append(parsed)
+            event.formattedMessage = comp.build()
         }
 
     }
