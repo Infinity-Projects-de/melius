@@ -11,8 +11,7 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.minestom.server.MinecraftServer
 import net.minestom.server.advancements.FrameType
-import net.minestom.server.advancements.notifications.Notification
-import net.minestom.server.advancements.notifications.NotificationCenter
+import net.minestom.server.advancements.Notification
 import net.minestom.server.adventure.audience.Audiences
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Player
@@ -41,13 +40,13 @@ class PlayerManager {
             ItemStack.of(Material.RAW_GOLD_BLOCK),
         )
 
-    private val tablistManager = TablistManager()
-    private val scoreboardManager = ScoreboardManager()
+    val tablistManager = TablistManager()
+    val scoreboardManager = ScoreboardManager()
 
     init {
         logger.error("Using temporary UUIDs for player data")
-        MinecraftServer.getConnectionManager().setUuidProvider { _, username ->
-            tempUUIDs.computeIfAbsent(username) { UUID.randomUUID() }
+        MinecraftServer.getConnectionManager().setPlayerProvider { player, user ->
+            Player(player, user)
         }
 
         File("players").mkdirs()
@@ -70,6 +69,20 @@ class PlayerManager {
             player.tagHandler().updateContent(tags)
         }
 
+        val inventoryFile = File("players/${player.uuid}-inventory.dat")
+        if (inventoryFile.exists()) {
+            val nbtString = inventoryFile.readText()
+            val nbtCompound = TagStringIOExt.readTag(nbtString) as CompoundBinaryTag
+            nbtCompound.forEach { (key, value) ->
+                if (value is CompoundBinaryTag) {
+                    val itemStack = ItemStack.fromItemNBT(value)
+                    player.inventory.setItemStack(key.toInt(), itemStack)
+                } else {
+                    logger.error("Invalid item stack in inventory file")
+                }
+            }
+        }
+
         val world = MeliusServer.worldManager.getDefaultWorld()
         event.spawningInstance = world
         val worldName = MeliusServer.worldManager.getWorldName(world)
@@ -87,7 +100,7 @@ class PlayerManager {
 
     fun spawnEvent(event: PlayerSpawnEvent) {
         val player = event.player
-        NotificationCenter.send(notification, player)
+        player.sendNotification(notification)
 
         tablistManager.sendTabList(player)
         scoreboardManager.sendScoreboard(player)
@@ -99,8 +112,17 @@ class PlayerManager {
         val serial = TagStringIOExt.writeTag(tags)
 
         val playerFile = File("players/${event.player.uuid}.dat")
-
         playerFile.writeText(serial)
+
+        val nbtCompound = CompoundBinaryTag.empty()
+        event.player.inventory.itemStacks.forEachIndexed { i, t ->
+            nbtCompound.put(i.toString(), t.toItemNBT())
+        }
+
+        val nbtString = TagStringIOExt.writeTag(nbtCompound)
+
+        val inventoryFile = File("players/${event.player.uuid}-inventory.dat")
+        inventoryFile.writeText(nbtString)
 
         broadcast(
             Component
