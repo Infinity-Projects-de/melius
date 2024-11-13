@@ -36,15 +36,6 @@ class WorldManager {
 
         val node = EventNode.all("world_manager")
         MinecraftServer.getGlobalEventHandler().addChild(node)
-
-        /*node.addListener(PlayerBlockPlaceEvent::class.java) { event ->
-            val player = event.player
-            val block = event.block
-            val instance = player.instance
-            val pos = event.blockPosition
-            val chunk = instance.getChunkAt(pos)
-            chunk?.setBlock(pos, block)
-        }*/
     }
 
     fun autoSave(enable: Boolean) {
