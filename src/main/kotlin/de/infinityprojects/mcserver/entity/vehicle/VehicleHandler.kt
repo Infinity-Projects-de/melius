@@ -2,53 +2,62 @@ package de.infinityprojects.mcserver.entity.vehicle
 
 import net.minestom.server.MinecraftServer
 import net.minestom.server.coordinate.Pos
-import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
-import net.minestom.server.entity.metadata.other.BoatMeta
 import net.minestom.server.event.EventFilter
 import net.minestom.server.event.EventNode
+import net.minestom.server.event.entity.EntityAttackEvent
 import net.minestom.server.event.player.PlayerBlockInteractEvent
 import net.minestom.server.event.player.PlayerEntityInteractEvent
 import net.minestom.server.event.player.PlayerPacketEvent
-import net.minestom.server.network.packet.client.play.ClientSteerVehiclePacket
+import net.minestom.server.network.packet.client.play.ClientInputPacket
 
 class VehicleHandler {
     private val logger = org.slf4j.LoggerFactory.getLogger("VehicleHandler")
 
     init {
-        val vehicleNode = EventNode.type("vehicle_node", EventFilter.PLAYER)
-        MinecraftServer.getGlobalEventHandler().addChild(vehicleNode)
+        val vehicleHandler = EventNode.all("vehicle_handler")
+        val playerActions = EventNode.type("player_actions", EventFilter.PLAYER)
+        val entityListener = EventNode.type("entity_listener", EventFilter.ENTITY)
 
-        vehicleNode.addListener(PlayerBlockInteractEvent::class.java, ::blockInteractEvent)
-        vehicleNode.addListener(PlayerEntityInteractEvent::class.java, ::entityInteractEvent)
-        vehicleNode.addListener(PlayerPacketEvent::class.java, ::playerEvent)
+        MinecraftServer.getGlobalEventHandler().addChild(vehicleHandler)
+        vehicleHandler.addChild(playerActions)
+        vehicleHandler.addChild(entityListener)
+
+        playerActions.addListener(PlayerBlockInteractEvent::class.java, ::blockInteractEvent)
+        playerActions.addListener(PlayerEntityInteractEvent::class.java, ::entityInteractEvent)
+
+        playerActions.addListener(PlayerPacketEvent::class.java, ::playerEvent)
+
+        entityListener.addListener(EntityAttackEvent::class.java) { event ->
+            val entity = event.target
+            if (entity is Vehicle) {
+               entity.damage(0.25f)
+            }
+        }
     }
 
     fun playerEvent(event: PlayerPacketEvent) {
         val player = event.player
         val packet = event.packet
-        if (packet is ClientSteerVehiclePacket) {
+        if (packet is ClientInputPacket) {
             val vehicle = player.vehicle
             if (vehicle != null) {
-                val unmountFlag = packet.flags.toInt() and 0x02 == 0x02
-                if (unmountFlag) {
-                    if (vehicle != null) {
-                        vehicle.removePassenger(player)
-                        player.teleport(vehicle.position.add(0.0, 1.0, 0.0))
+                if (packet.shift()) {
+                    vehicle.removePassenger(player)
+                    player.teleport(vehicle.position.add(0.0, 1.0, 0.0))
+                }
+
+                if (packet.forward() || packet.backward()) {
+                    if (vehicle.entityType == EntityType.MINECART) {
+                        val playerDirection = player.position.direction()
+                        if (packet.backward()) {
+                            playerDirection.mul(-1.0)
+                        }
+                        vehicle.velocity = vehicle.position.direction().mul(playerDirection)
                     }
                 }
-
-                if (packet.forward > 0f && vehicle.entityType == EntityType.MINECART) {
-                    val playerDirection = player.position.direction()
-
-
-                    vehicle.velocity = vehicle.position.direction().mul(playerDirection.mul(packet.forward.toDouble()))
-                }
             }
-
-
         }
-
     }
 
     fun blockInteractEvent(event: PlayerBlockInteractEvent) {
@@ -63,20 +72,29 @@ class VehicleHandler {
             val playerPos = player.position
             val spawnPos = event.blockPosition.add(event.cursorPosition)
             val pos = Pos(spawnPos, playerPos.yaw, playerPos.pitch)
-
-            val boat = if (materialName.endsWith("_chest_boat")) Entity(EntityType.CHEST_BOAT) else Entity(EntityType.BOAT)
-
-            val meta = boat.entityMeta as BoatMeta
-            val typeName = materialName.split("_")[0].uppercase()
-            meta.type = BoatMeta.Type.valueOf(typeName)
-
+            val boat = Boat(item.material())
             boat.setInstance(instance, pos)
-        } else if (materialName.startsWith("minecart")) {
+        } else if (materialName.endsWith("minecart")) {
             val block = event.block
             if (block.key().value().endsWith("rail")) {
                 val pos = event.blockPosition.add(0.5, 0.5, 0.5)
 
-                val minecart = Entity(EntityType.MINECART)
+                val minecart = if (materialName.startsWith("tnt")) {
+                    Vehicle(EntityType.TNT_MINECART)
+                } else if (materialName.startsWith("hopper")) {
+                    Vehicle(EntityType.HOPPER_MINECART)
+                } else if (materialName.startsWith("command")) {
+                    Vehicle(EntityType.COMMAND_BLOCK_MINECART)
+                } else if (materialName.startsWith("furnace")) {
+                    Vehicle(EntityType.FURNACE_MINECART)
+                } else if (materialName.startsWith("chest")) {
+                    Vehicle(EntityType.CHEST_MINECART)
+                } else if (materialName.startsWith("tnt")) {
+                    Vehicle(EntityType.TNT_MINECART)
+                } else {
+                    Vehicle(EntityType.MINECART)
+                }
+
                 minecart.setInstance(instance, pos)
             }
         }
@@ -86,18 +104,8 @@ class VehicleHandler {
         val player = event.player
         val entity = event.target
 
-        if (entity.entityType == EntityType.BOAT) {
-            if (entity.passengers.size < 2) {
-                entity.addPassenger(player)
-            }
-        } else if (entity.entityType == EntityType.CHEST_BOAT) {
-            if (entity.passengers.isEmpty()) {
-                entity.addPassenger(player)
-            }
-        } else if (entity.entityType == EntityType.MINECART) {
-            if (entity.passengers.isEmpty()) {
-                entity.addPassenger(player)
-            }
+        if (entity is Vehicle) {
+            entity.addPassenger(player)
         }
     }
 
