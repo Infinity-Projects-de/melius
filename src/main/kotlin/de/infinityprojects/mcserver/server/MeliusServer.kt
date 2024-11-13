@@ -2,6 +2,7 @@ package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
 import de.infinityprojects.mcserver.entity.vehicle.VehicleHandler
+import de.infinityprojects.mcserver.ui.TextAnimationEngine
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
 import de.infinityprojects.mcserver.utils.logSystemInfo
@@ -18,13 +19,17 @@ object MeliusServer {
     lateinit var worldManager: WorldManager
     lateinit var playerManager: PlayerManager
     lateinit var commandManager: CommandManager
+    lateinit var textAnimationEngine: TextAnimationEngine
     lateinit var chatManager: ChatManager
     val config = PropertiesConfiguration()
 
     fun init() {
         val start = System.currentTimeMillis()
         Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            logger.error("An uncaught exception happened, you can find more details in the debug file: {}", e.toString())
+            logger.error(
+                "An uncaught exception happened, you can find more details in the debug file: {}",
+                e.toString()
+            )
             logger.debug("Start of stacktrace", e)
         }
 
@@ -53,6 +58,7 @@ object MeliusServer {
         playerManager = PlayerManager()
         chatManager = ChatManager()
         commandManager = CommandManager()
+        textAnimationEngine = TextAnimationEngine()
         VehicleHandler()
 
         // MOTD
@@ -80,11 +86,6 @@ object MeliusServer {
         Runtime.getRuntime().addShutdownHook(
             Thread {
                 logger.info("Shutting down server")
-                logger.warn("Removing temporary player data")
-                val players = File("players")
-                if (players.exists()) {
-                    players.deleteRecursively()
-                }
             },
         )
     }
