@@ -29,7 +29,6 @@ import java.util.*
 class PlayerManager {
     private val logger = LoggerFactory.getLogger("PlayerManager")
     private val players = hashMapOf<String, Player>() // replaceable with Audiences
-    private val tempUUIDs = hashMapOf<String, UUID>()
     private val notification =
         Notification(
             Component
