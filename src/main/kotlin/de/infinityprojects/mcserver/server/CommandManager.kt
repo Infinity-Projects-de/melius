@@ -7,6 +7,8 @@ import de.infinityprojects.mcserver.commands.performance.Cpu
 import de.infinityprojects.mcserver.commands.performance.Ram
 import de.infinityprojects.mcserver.commands.performance.Threads
 import de.infinityprojects.mcserver.commands.performance.Tps
+import de.infinityprojects.mcserver.commands.ui.ScoreboardCommand
+import de.infinityprojects.mcserver.commands.ui.TabCommand
 import de.infinityprojects.mcserver.utils.CONSOLE_THREAD_NAME
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import net.minecrell.terminalconsole.SimpleTerminalConsole
@@ -32,6 +34,8 @@ class CommandManager {
                 Threads(),
                 Teleport(),
                 SetSpawn(),
+                ScoreboardCommand(),
+                TabCommand()
             )
 
         commands.forEach(MinecraftServer.getCommandManager()::register)
