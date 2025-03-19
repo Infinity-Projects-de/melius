@@ -13,6 +13,8 @@ import net.minestom.server.instance.Instance
 import net.minestom.server.instance.InstanceContainer
 import net.minestom.server.instance.LightingChunk
 import net.minestom.server.instance.anvil.AnvilLoader
+import net.minestom.server.instance.block.Block
+import net.minestom.server.instance.generator.Generator
 import java.io.File
 
 class WorldManager {
@@ -57,6 +59,14 @@ class WorldManager {
                 }, CHUNK_SAVING_THREAD_NAME)
             thread.start()
         }
+    }
+
+    fun createWorld(name: String, generator: Generator): InstanceContainer {
+        val world = createWorld(name)
+
+        world.setGenerator(generator)
+
+        return world
     }
 
     fun createWorld(name: String): InstanceContainer {
@@ -118,6 +128,13 @@ class WorldManager {
 
     fun getSpawn(instance: Instance): Pos {
         val worldSpawn = instance.getTag(WorldSpawn.getTag())
-        return worldSpawn?.pos ?: Pos(0.0, 41.0, 0.0)
+        var highestBlock = 319
+        instance.loadChunk(0, 0).join()
+        while (instance.getBlock(0, highestBlock, 0) == Block.AIR) {
+            highestBlock--
+        }
+
+
+        return worldSpawn?.pos ?: Pos(0.0, highestBlock + 1.0, 0.0)
     }
 }

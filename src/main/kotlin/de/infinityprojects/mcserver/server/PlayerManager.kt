@@ -24,7 +24,6 @@ import net.minestom.server.item.ItemStack
 import net.minestom.server.item.Material
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
 
 class PlayerManager {
     private val logger = LoggerFactory.getLogger("PlayerManager")
@@ -43,7 +42,6 @@ class PlayerManager {
     val scoreboardManager = ScoreboardManager()
 
     init {
-        logger.error("Using temporary UUIDs for player data")
         MinecraftServer.getConnectionManager().setPlayerProvider { player, user ->
             Player(player, user)
         }
