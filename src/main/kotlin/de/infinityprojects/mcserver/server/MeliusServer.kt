@@ -7,6 +7,9 @@ import de.infinityprojects.mcserver.utils.SERVER_BRAND
 import de.infinityprojects.mcserver.utils.STARTUP_MESSAGE
 import de.infinityprojects.mcserver.utils.logSystemInfo
 import de.infinityprojects.mcserver.world.WorldManager
+import de.infinityprojects.mcserver.world.generator.FlatWorldGenerator
+import de.infinityprojects.mcserver.world.generator.NoisyWorldGenerator
+import de.infinityprojects.mcserver.world.generator.OverworldGenerator
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import net.minestom.server.MinecraftServer
 import net.minestom.server.event.server.ServerListPingEvent
@@ -53,7 +56,10 @@ object MeliusServer {
             worldManager.autoSave(true)
         }
 
-        worldManager.createWorld("world")
+        worldManager.createWorld("world", OverworldGenerator())
+        worldManager.createWorld("flat", FlatWorldGenerator())
+        worldManager.createWorld("noisy", NoisyWorldGenerator())
+
 
         playerManager = PlayerManager()
         chatManager = ChatManager()
