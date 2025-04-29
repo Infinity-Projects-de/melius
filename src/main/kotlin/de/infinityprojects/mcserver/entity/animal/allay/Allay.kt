@@ -161,13 +161,10 @@ class Allay : PathfinderMob(EntityType.ALLAY) {
         return !itemInMainHand.isAir
     }
 
-    override fun playAmbientSound() {
-        val sound = if (hasItemInHand()) {
-            SoundEvent.ENTITY_ALLAY_AMBIENT_WITH_ITEM
-        } else {
-            SoundEvent.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM
-        }
-        playSoundEvent(sound, 0.4f, 1.0f + random.nextFloat() * 0.4f)
+    override fun ambientSound(): SoundEvent? = if (hasItemInHand()) {
+        SoundEvent.ENTITY_ALLAY_AMBIENT_WITH_ITEM
+    } else {
+        SoundEvent.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM
     }
 
     override fun hurtSound(): SoundEvent? {
