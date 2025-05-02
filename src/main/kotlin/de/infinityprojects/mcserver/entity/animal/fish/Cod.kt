@@ -8,9 +8,7 @@ class Cod: EntityFishSchool(EntityType.COD) {
 
     override fun hurtSound(): SoundEvent? = SoundEvent.ENTITY_COD_HURT
 
-    override fun playAmbientSound() {
-        playSoundEvent(SoundEvent.ENTITY_COD_AMBIENT, soundVolume(), soundPitch())
-    }
+    override fun ambientSound(): SoundEvent? = SoundEvent.ENTITY_COD_AMBIENT
 
     override fun getFlopSound(): SoundEvent = SoundEvent.ENTITY_COD_FLOP
 }
