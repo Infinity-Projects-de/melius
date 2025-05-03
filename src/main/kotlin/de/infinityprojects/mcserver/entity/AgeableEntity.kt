@@ -32,13 +32,13 @@ abstract class AgeableEntity(type: EntityType): PathfinderMob(type) {
         }
 
     fun ageUp(i: Int) {
-        ageUp(i, false)
+        ageUp(i, true)
     }
 
-    fun ageUp(i: Int, flag: Boolean) {
+    fun ageUp(i: Int, showParticles: Boolean) {
         age += i * 20
 
-        if (flag) {
+        if (showParticles) {
             forcedAgeTimer = 40
         }
     }
