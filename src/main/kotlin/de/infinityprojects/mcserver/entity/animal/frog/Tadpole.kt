@@ -31,7 +31,8 @@ class Tadpole() : EntityFish<TadpoleMeta>(EntityType.TADPOLE) {
     ): InteractionResult {
         val item = player.getItemInHand(hand)
         if (isFood(item)) {
-            feed(player, item)
+            val left = BABY_INITIAL_AGE - age
+            ageUp(speedUpSecondsWhenFeeding(left))
             player.setItemInHand(hand, item.withAmount { i -> i - 1 })
             return InteractionResult.SUCCESS
         }
@@ -40,11 +41,6 @@ class Tadpole() : EntityFish<TadpoleMeta>(EntityType.TADPOLE) {
 
     fun isFood(itemStack: ItemStack): Boolean {
         return itemStack.material() == Material.SLIME_BALL
-    }
-
-    private fun feed(player: Player, itemStack: ItemStack) {
-        val left = BABY_INITIAL_AGE - age
-        ageUp(speedUpSecondsWhenFeeding(left))
     }
 
     override fun ambientSound(): SoundEvent? = null
