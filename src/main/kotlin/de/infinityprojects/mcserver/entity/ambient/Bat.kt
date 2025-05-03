@@ -1,5 +1,6 @@
 package de.infinityprojects.mcserver.entity.ambient
 
+import de.infinityprojects.mcserver.entity.PathfinderMob
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.coordinate.Vec
 import net.minestom.server.entity.EntityType
@@ -12,7 +13,7 @@ import kotlin.math.floor
 import kotlin.math.sign
 import kotlin.random.Random
 
-class Bat : EntityAmbient(EntityType.BAT) {
+class Bat : PathfinderMob(EntityType.BAT) {
     var targetPosition: Pos? = null
 
     init {
@@ -37,7 +38,7 @@ class Bat : EntityAmbient(EntityType.BAT) {
     override fun aiTick(time: Long) {
         super.aiTick(time)
 
-        val pos = position;
+        val pos = position
         val posAbove = pos.relative(BlockFace.TOP)
 
         if (isResting()) {
@@ -112,4 +113,10 @@ class Bat : EntityAmbient(EntityType.BAT) {
     override fun soundPitch(): Float = super.soundPitch() * 0.95f
 
     override fun soundVolume(): Float = 0.1f
+
+    override fun setSuperclassAttributes() { }
+
+    override fun canBeLeashed(): Boolean {
+        return false
+    }
 }
