@@ -1,4 +1,4 @@
-package de.infinityprojects.mcserver.entity.animal.fish
+package de.infinityprojects.mcserver.entity.animal.water
 
 import net.minestom.server.entity.EntityType
 import net.minestom.server.sound.SoundEvent
