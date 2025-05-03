@@ -4,7 +4,6 @@ import de.infinityprojects.mcserver.entity.animal.Animal
 import net.minestom.server.coordinate.Vec
 import net.minestom.server.entity.EntityType
 import net.minestom.server.entity.ItemEntity
-import net.minestom.server.entity.MetadataDef
 import net.minestom.server.entity.ai.GoalSelector
 import net.minestom.server.entity.ai.TargetSelector
 import net.minestom.server.entity.attribute.Attribute
@@ -13,8 +12,9 @@ import net.minestom.server.entity.metadata.animal.ArmadilloMeta
 import net.minestom.server.item.ItemStack
 import net.minestom.server.item.Material
 import net.minestom.server.sound.SoundEvent
+import kotlin.random.Random
 
-class Armadillo : Animal(EntityType.ARMADILLO) {
+class Armadillo : Animal<ArmadilloMeta>(EntityType.ARMADILLO) {
     private var inStateTicks: Long = 0
     private var scuteTime: Int = pickNextScuteDropTime()
     private var peekReceivedClient: Boolean = false
@@ -53,7 +53,7 @@ class Armadillo : Animal(EntityType.ARMADILLO) {
     }
 
     private fun pickNextScuteDropTime(): Int {
-        return random.nextInt(20 * 60 * 5) + 20 * 60 * 5
+        return Random.Default.nextInt(20 * 60 * 5) + 20 * 60 * 5
     }
 
     override fun damage(damage: Damage): Boolean {
@@ -75,21 +75,21 @@ class Armadillo : Animal(EntityType.ARMADILLO) {
 
     fun rollOut() {
         if (isScared()) {
-            playSoundEvent(SoundEvent.ENTITY_ARMADILLO_UNROLL_FINISH, 1.0f, (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f)
+            playSoundEvent(SoundEvent.ENTITY_ARMADILLO_UNROLL_FINISH, 1.0f, (Random.Default.nextFloat() - Random.Default.nextFloat()) * 0.2f + 1.0f)
             switchToState( ArmadilloMeta.State.IDLE)
         }
     }
 
     fun isScared(): Boolean {
-        return getState() == ArmadilloMeta.State.SCARED
+        return state() == ArmadilloMeta.State.SCARED
     }
 
-    fun getState():  ArmadilloMeta.State {
-        return metadata[MetadataDef.Armadillo.STATE]
+    fun state():  ArmadilloMeta.State {
+        return typedMeta.state
     }
 
     fun switchToState(state: ArmadilloMeta.State) {
-        metadata[MetadataDef.Armadillo.STATE] = state
+        typedMeta.state = state
     }
 
     override fun playStepSound() {
@@ -109,7 +109,7 @@ class Armadillo : Animal(EntityType.ARMADILLO) {
         val itemStack = ItemStack.of(Material.ARMADILLO_SCUTE, 1)
         val item = ItemEntity(itemStack)
         item.setInstance(instance, position.add(Vec(0.0, 0.5, 0.0)))
-        playSoundEvent(SoundEvent.ENTITY_ARMADILLO_BRUSH, 1.0f, (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f)
+        playSoundEvent(SoundEvent.ENTITY_ARMADILLO_BRUSH, 1.0f, (Random.Default.nextFloat() - Random.Default.nextFloat()) * 0.2f + 1.0f)
         return true
     }
 }
