@@ -12,7 +12,7 @@ import net.minestom.server.sound.SoundEvent
 import kotlin.math.max
 import kotlin.random.Random
 
-class Camel : AbstractHorse(EntityType.CAMEL) {
+class Camel : AbstractHorse<CamelMeta>(EntityType.CAMEL) {
     private var dashCooldown: Int = 0
     private var idleAnimationTimeout: Int = 0
 
@@ -62,11 +62,11 @@ class Camel : AbstractHorse(EntityType.CAMEL) {
     }
 
     fun isDashing(): Boolean {
-        return (entityMeta as CamelMeta).isDashing
+        return typedMeta.isDashing
     }
 
     fun setDashing(flag: Boolean) {
-        (entityMeta as CamelMeta).isDashing = flag
+        typedMeta.isDashing = flag
     }
 
     fun sitDown() {
@@ -95,7 +95,7 @@ class Camel : AbstractHorse(EntityType.CAMEL) {
     }
 
     fun isSitting(): Boolean {
-        return (entityMeta as CamelMeta).lastPoseChangeTick < 0
+        return typedMeta.lastPoseChangeTick < 0
     }
 
     override fun canBeAffected(potionEffect: PotionEffect): Boolean {
