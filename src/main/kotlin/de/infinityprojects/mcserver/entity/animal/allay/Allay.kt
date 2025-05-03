@@ -4,19 +4,19 @@ import de.infinityprojects.mcserver.entity.PathfinderMob
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
-import net.minestom.server.entity.MetadataDef
 import net.minestom.server.entity.Player
 import net.minestom.server.entity.ai.GoalSelector
 import net.minestom.server.entity.ai.TargetSelector
 import net.minestom.server.entity.attribute.Attribute
 import net.minestom.server.entity.damage.Damage
+import net.minestom.server.entity.metadata.other.AllayMeta
 import net.minestom.server.entity.pathfinding.followers.FlyingNodeFollower
 import net.minestom.server.entity.pathfinding.generators.FlyingNodeGenerator
 import net.minestom.server.instance.block.Block
 import net.minestom.server.sound.SoundEvent
 import kotlin.math.min
 
-class Allay : PathfinderMob(EntityType.ALLAY) {
+class Allay : PathfinderMob<AllayMeta>(EntityType.ALLAY) {
     var duplicationCooldown: Long = 0
     private var holdingItemAnimationTicks = 0f
     private var holdingItemAnimationTicks0 = 0f
@@ -51,8 +51,8 @@ class Allay : PathfinderMob(EntityType.ALLAY) {
         if (isAlive && time % 10 == 0L) {
             heal(1.0f)
         }
-        if (isDancing() && shouldStopDancing() && time % 20 == 0L) {
-            setDancing(false)
+        if (isDancing && shouldStopDancing() && time % 20 == 0L) {
+            isDancing = false
             jukeboxPos = null
         }
         updateDuplicationCooldown()
@@ -67,7 +67,7 @@ class Allay : PathfinderMob(EntityType.ALLAY) {
             min(holdingItemAnimationTicks - 1.0f, 5.0f)
         }
 
-        if (isDancing()) {
+        if (isDancing) {
             dancingAnimationTicks++
             spinningAnimationTicks0 = spinningAnimationTicks
             if (isSpinning()) {
@@ -105,25 +105,21 @@ class Allay : PathfinderMob(EntityType.ALLAY) {
 
     fun setJukeboxPlaying(pos: Pos, playing: Boolean) {
         if (playing) {
-            if (!isDancing()) {
+            if (!isDancing) {
                 jukeboxPos = pos
-                setDancing(true)
+                isDancing = true
             }
         } else if (pos == jukeboxPos || jukeboxPos == null) {
             jukeboxPos = null
-            setDancing(false)
+            isDancing = false
         }
     }
 
-    fun isDancing(): Boolean {
-        return metadata[MetadataDef.Allay.IS_DANCING]
-    }
-
-    fun setDancing(flag: Boolean) {
-        if (!flag || !isPanicking) {
-            metadata[MetadataDef.Allay.IS_DANCING] = flag
+    var isDancing: Boolean
+        get() = typedMeta.isDancing
+        set(value) {
+            typedMeta.isDancing = value
         }
-    }
 
     private fun shouldStopDancing(): Boolean {
         return jukeboxPos == null || !jukeboxPos!!.sameBlock(position) || !instance.getBlock(jukeboxPos!!)
@@ -138,12 +134,8 @@ class Allay : PathfinderMob(EntityType.ALLAY) {
     private fun updateDuplicationCooldown() {
         if (duplicationCooldown > 0) {
             duplicationCooldown--
-            metadata[MetadataDef.Allay.CAN_DUPLICATE] = duplicationCooldown == 0L
+            typedMeta.setCanDuplicate(duplicationCooldown == 0L)
         }
-    }
-
-    fun canDuplicate(): Boolean {
-        return metadata[MetadataDef.Allay.CAN_DUPLICATE] ?: true
     }
 
     fun duplicateAllay() {
