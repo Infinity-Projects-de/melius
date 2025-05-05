@@ -14,11 +14,12 @@ import net.minestom.server.entity.ai.GoalSelector
 import net.minestom.server.entity.ai.goal.RandomLookAroundGoal
 import net.minestom.server.entity.ai.goal.RandomStrollGoal
 import net.minestom.server.entity.attribute.Attribute
+import net.minestom.server.entity.metadata.animal.AnimalMeta
 import net.minestom.server.item.ItemStack
 import net.minestom.server.item.Material
 import net.minestom.server.sound.SoundEvent
 
-abstract class AbstractCow(type: EntityType): Animal(type) {
+abstract class AbstractCow<M : AnimalMeta>(type: EntityType): Animal<M>(type) {
     init {
         require(type == EntityType.COW || type == EntityType.MOOSHROOM) {
             "Invalid entity type for Cow: $type"
@@ -44,9 +45,9 @@ abstract class AbstractCow(type: EntityType): Animal(type) {
     }
 
     override fun deathSound(): SoundEvent? = SoundEvent.ENTITY_COW_DEATH
-    override fun stepSound(): SoundEvent? = SoundEvent.ENTITY_COW_STEP
+    override fun ambientSound(): SoundEvent? = SoundEvent.ENTITY_COW_STEP
     override fun hurtSound(): SoundEvent? = SoundEvent.ENTITY_COW_HURT
-    override fun playAmbientSound() {
+    override fun playStepSound() {
         playSoundEvent(SoundEvent.ENTITY_COW_AMBIENT, soundVolume(), soundPitch())
     }
 
