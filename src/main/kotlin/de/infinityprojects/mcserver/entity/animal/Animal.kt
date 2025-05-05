@@ -69,7 +69,7 @@ open class Animal<M : AnimalMeta>(type: EntityType): AgeableEntity<M>(type) {
             return false
         }
 
-        if (this.isInLava || other.isInLava) {
+        if (this.isInLove || other.isInLove) {
             return false
         }
 
