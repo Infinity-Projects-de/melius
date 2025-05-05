@@ -3,14 +3,15 @@ package de.infinityprojects.mcserver.entity
 import net.minestom.server.coordinate.Vec
 import net.minestom.server.entity.EntityType
 import net.minestom.server.entity.MetadataDef
+import net.minestom.server.entity.metadata.AgeableMobMeta
 import net.minestom.server.particle.Particle
 import kotlin.random.Random
 
-abstract class AgeableEntity(type: EntityType): PathfinderMob(type) {
+abstract class AgeableEntity<M : AgeableMobMeta>(type: EntityType): PathfinderMob<M>(type) {
     var isBaby: Boolean
         get() = age < 0
         private set(value) {
-            age = if (value) -24000 else 0
+            age = if (value) BABY_INITIAL_AGE else 0
             metadata[MetadataDef.AgeableMob.IS_BABY] = value
         }
 
@@ -65,9 +66,17 @@ abstract class AgeableEntity(type: EntityType): PathfinderMob(type) {
         }
     }
 
-    fun ageBoundaryReached() {
+    open fun ageBoundaryReached() {
         if (!isBaby) {
             // TODO: Boat thing
+        }
+    }
+
+    companion object {
+        const val BABY_INITIAL_AGE = -24000
+
+        fun speedUpSecondsWhenFeeding(seconds: Int): Int {
+            return ((seconds / 20).toFloat() * 0.1f).toInt()
         }
     }
 
