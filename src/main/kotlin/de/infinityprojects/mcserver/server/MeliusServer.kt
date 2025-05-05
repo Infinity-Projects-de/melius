@@ -1,6 +1,7 @@
 package de.infinityprojects.mcserver.server
 
 import de.infinityprojects.mcserver.config.PropertiesConfiguration
+import de.infinityprojects.mcserver.entity.EntityHandler
 import de.infinityprojects.mcserver.entity.vehicle.VehicleHandler
 import de.infinityprojects.mcserver.ui.TextAnimationEngine
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
@@ -13,6 +14,7 @@ import de.infinityprojects.mcserver.world.generator.OverworldGenerator
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import net.minestom.server.MinecraftServer
 import net.minestom.server.event.server.ServerListPingEvent
+import net.minestom.server.exception.ExceptionHandler
 import net.minestom.server.extras.lan.OpenToLAN
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -26,17 +28,23 @@ object MeliusServer {
     lateinit var chatManager: ChatManager
     val config = PropertiesConfiguration()
 
-    fun init() {
-        val start = System.currentTimeMillis()
-        Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            logger.error(
-                "An uncaught exception happened, you can find more details in the debug file: {}",
-                e.toString()
-            )
+    private class MeliusExceptionHandler: ExceptionHandler {
+        override fun handleException(e: Throwable?) {
+            logger.error("An uncaught exception happened, you can find more details in the debug file: {}", e.toString())
             logger.debug("Start of stacktrace", e)
         }
 
+    }
+
+    fun init() {
+        val start = System.currentTimeMillis()
+
         val minecraftServer = MinecraftServer.init()
+
+        val exceptionHandler = MeliusExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { _, e -> exceptionHandler.handleException(e) }
+        MinecraftServer.getExceptionManager().exceptionHandler = exceptionHandler
+
         MinecraftServer.setBrandName(SERVER_BRAND)
 
         // STARTUP MESSAGE
@@ -66,6 +74,7 @@ object MeliusServer {
         commandManager = CommandManager()
         textAnimationEngine = TextAnimationEngine()
         VehicleHandler()
+        EntityHandler()
 
         // MOTD
         MinecraftServer.getGlobalEventHandler().addListener(ServerListPingEvent::class.java) { event ->
