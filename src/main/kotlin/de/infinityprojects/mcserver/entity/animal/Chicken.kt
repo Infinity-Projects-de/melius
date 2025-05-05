@@ -6,18 +6,29 @@ import de.infinityprojects.mcserver.entity.ai.goal.PanicGoal
 import de.infinityprojects.mcserver.entity.ai.goal.TemptGoal
 import de.infinityprojects.mcserver.entity.ai.goal.animal.BreedGoal
 import de.infinityprojects.mcserver.entity.ai.goal.animal.FollowParentGoal
+import net.minestom.server.component.DataComponents
 import net.minestom.server.entity.EntityType
 import net.minestom.server.entity.ItemEntity
 import net.minestom.server.entity.ai.GoalSelector
 import net.minestom.server.entity.ai.goal.RandomLookAroundGoal
 import net.minestom.server.entity.ai.goal.RandomStrollGoal
 import net.minestom.server.entity.attribute.Attribute
+import net.minestom.server.entity.metadata.animal.ChickenMeta
+import net.minestom.server.entity.metadata.animal.ChickenVariant
 import net.minestom.server.item.ItemStack
 import net.minestom.server.item.Material
+import net.minestom.server.registry.DynamicRegistry
 import net.minestom.server.sound.SoundEvent
+import kotlin.random.Random
 
-class Chicken: Animal(EntityType.CHICKEN) {
+class Chicken: Animal<ChickenMeta>(EntityType.CHICKEN) {
     var eggTime = calculateEggTime()
+
+    var variant: DynamicRegistry.Key<ChickenVariant>
+        get() = get(DataComponents.CHICKEN_VARIANT) ?: ChickenVariant.TEMPERATE
+        set(value) {
+            set(DataComponents.CHICKEN_VARIANT, value)
+        }
 
     override fun createGoals(): List<GoalSelector> {
         return listOf(
@@ -39,13 +50,13 @@ class Chicken: Animal(EntityType.CHICKEN) {
     }
 
     fun calculateEggTime(): Int {
-        return random.nextInt(6000) + 6000
+        return Random.Default.nextInt(6000) + 6000
     }
 
     fun tryToLayEgg() {
         --eggTime
         if (eggTime < 0) {
-            val pitch = (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f
+            val pitch = (Random.Default.nextFloat() - Random.Default.nextFloat()) * 0.2f + 1.0f
             playSoundEvent(SoundEvent.ENTITY_CHICKEN_EGG, 1.0f, pitch)
             val egg = ItemStack.of(Material.EGG, 1)
             val item = ItemEntity(egg)
@@ -65,11 +76,11 @@ class Chicken: Animal(EntityType.CHICKEN) {
         tryToLayEgg()
     }
 
-    override fun playAmbientSound() {
+    override fun playStepSound() {
         playSoundEvent(SoundEvent.ENTITY_CHICKEN_AMBIENT, soundVolume(), soundPitch())
     }
 
     override fun hurtSound(): SoundEvent = SoundEvent.ENTITY_CHICKEN_HURT
     override fun deathSound(): SoundEvent = SoundEvent.ENTITY_CHICKEN_DEATH
-    override fun stepSound(): SoundEvent? = SoundEvent.ENTITY_CHICKEN_STEP
+    override fun ambientSound(): SoundEvent? = SoundEvent.ENTITY_CHICKEN_STEP
 }
