@@ -181,4 +181,8 @@ class PlayerManager {
 
         return worldSpawn.pos
     }
+
+    fun getPlayerByUUID(uuid: UUID): Player? {
+        return players.values.find { it.uuid == uuid }
+    }
 }
