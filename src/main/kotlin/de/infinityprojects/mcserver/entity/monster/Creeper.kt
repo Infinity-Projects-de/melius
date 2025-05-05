@@ -6,7 +6,6 @@ import de.infinityprojects.mcserver.entity.ai.goal.FloatGoal
 import de.infinityprojects.mcserver.entity.ai.goal.LookAtPlayerGoal
 import de.infinityprojects.mcserver.entity.animal.Cat
 import de.infinityprojects.mcserver.entity.animal.Ocelot
-import net.minestom.server.component.DataComponents
 import net.minestom.server.entity.EntityType
 import net.minestom.server.entity.Player
 import net.minestom.server.entity.PlayerHand
