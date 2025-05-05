@@ -4,6 +4,7 @@ import de.infinityprojects.mcserver.data.WorldSpawn
 import de.infinityprojects.mcserver.ui.ScoreboardManager
 import de.infinityprojects.mcserver.ui.TablistManager
 import de.infinityprojects.mcserver.utils.SERVER_BRAND
+import net.kyori.adventure.nbt.BinaryTag
 import net.kyori.adventure.nbt.CompoundBinaryTag
 import net.kyori.adventure.nbt.TagStringIOExt
 import net.kyori.adventure.text.Component
@@ -13,7 +14,9 @@ import net.minestom.server.MinecraftServer
 import net.minestom.server.advancements.FrameType
 import net.minestom.server.advancements.Notification
 import net.minestom.server.adventure.audience.Audiences
+import net.minestom.server.codec.Transcoder
 import net.minestom.server.coordinate.Pos
+import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
 import net.minestom.server.event.EventFilter
 import net.minestom.server.event.EventNode
@@ -22,8 +25,10 @@ import net.minestom.server.event.player.PlayerDisconnectEvent
 import net.minestom.server.event.player.PlayerSpawnEvent
 import net.minestom.server.item.ItemStack
 import net.minestom.server.item.Material
+import net.minestom.server.timer.TaskSchedule
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.util.*
 
 class PlayerManager {
     private val logger = LoggerFactory.getLogger("PlayerManager")
@@ -54,6 +59,15 @@ class PlayerManager {
         node.addListener(AsyncPlayerConfigurationEvent::class.java, ::configurationEvent)
         node.addListener(PlayerSpawnEvent::class.java, ::spawnEvent)
         node.addListener(PlayerDisconnectEvent::class.java, ::disconnectEvent)
+
+        MinecraftServer.getSchedulerManager().submitTask {
+            players.values.forEach { player ->
+                if (player.isOnline) {
+                    savePlayer(player)
+                }
+            }
+            return@submitTask TaskSchedule.seconds(30)
+        }
     }
 
     fun configurationEvent(event: AsyncPlayerConfigurationEvent) {
@@ -71,9 +85,9 @@ class PlayerManager {
             val nbtString = inventoryFile.readText()
             val nbtCompound = TagStringIOExt.readTag(nbtString) as CompoundBinaryTag
             nbtCompound.forEach { (key, value) ->
-                if (value is CompoundBinaryTag) {
-                    val itemStack = ItemStack.fromItemNBT(value)
-                    player.inventory.setItemStack(key.toInt(), itemStack)
+                if (value is BinaryTag) {
+                    val item = ItemStack.CODEC.decode(Transcoder.NBT, value).orElseThrow()
+                    player.inventory.setItemStack(key.toInt(), item)
                 } else {
                     logger.error("Invalid item stack in inventory file")
                 }
@@ -99,27 +113,37 @@ class PlayerManager {
         val player = event.player
         player.sendNotification(notification)
 
+        player.gameMode = GameMode.CREATIVE
+
         tablistManager.sendTabList(player)
         scoreboardManager.sendScoreboard(player)
     }
 
-    fun disconnectEvent(event: PlayerDisconnectEvent) {
-        players.remove(event.player.username)
-        val tags = event.player.tagHandler().asCompound()
+    fun savePlayer(player: Player) {
+        val tags = player.tagHandler().asCompound()
         val serial = TagStringIOExt.writeTag(tags)
 
-        val playerFile = File("players/${event.player.uuid}.dat")
+        val playerFile = File("players/${player.uuid}.dat")
         playerFile.writeText(serial)
 
-        val nbtCompound = CompoundBinaryTag.empty()
-        event.player.inventory.itemStacks.forEachIndexed { i, t ->
-            nbtCompound.put(i.toString(), t.toItemNBT())
+        var nbtCompound = CompoundBinaryTag.empty()
+        player.inventory.itemStacks.forEachIndexed { i, t ->
+            if (!t.isAir) {
+                val nbt = ItemStack.CODEC.encode(Transcoder.NBT, t).orElseThrow()
+                nbtCompound = nbtCompound.put(i.toString(), nbt)
+            }
         }
 
         val nbtString = TagStringIOExt.writeTag(nbtCompound)
 
-        val inventoryFile = File("players/${event.player.uuid}-inventory.dat")
+        val inventoryFile = File("players/${player.uuid}-inventory.dat")
         inventoryFile.writeText(nbtString)
+    }
+
+    fun disconnectEvent(event: PlayerDisconnectEvent) {
+        players.remove(event.player.username)
+
+        savePlayer(event.player)
 
         broadcast(
             Component
