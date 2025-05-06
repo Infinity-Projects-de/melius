@@ -30,7 +30,7 @@ open class Guardian<M : GuardianMeta> protected constructor(type: EntityType) : 
         operator fun invoke() = Guardian<GuardianMeta>(EntityType.GUARDIAN)
     }
 
-    val attackDuration: Int = 40
+    open val attackDuration: Int = 40
 
     var activeTarget: PathfinderMob<*>?
         get() = typedMeta.target as? PathfinderMob<*>
@@ -182,31 +182,29 @@ open class Guardian<M : GuardianMeta> protected constructor(type: EntityType) : 
         override fun tick(time: Long) {
             val target = this@Guardian.target as? PathfinderMob<*> ?: return
 
-            if (target != null) {
-                navigator.reset()
-                lookAt(target)
-                if (!hasLineOfSight(target)) {
-                    this@Guardian.target = null
-                } else {
-                    attackTime++
-                    if (attackTime == 0) {
-                        activeTarget = target
-                        if (!isSilent) {
-                            playSoundEvent(SoundEvent.ENTITY_GUARDIAN_ATTACK, 1.0f, 1.0f)
-                        }
-                    } else if (attackTime >= attackDuration) {
-                        var damage = 1.0f
-
-                        if (MinecraftServer.getDifficulty() == Difficulty.HARD) {
-                            damage += 2.0f
-                        }
-
-                        if (elder) {
-                            damage += 2.0f
-                        }
-
-                        target.damage(Damage(DamageType.MOB_ATTACK, this@Guardian, this@Guardian, position, damage))
+            navigator.reset()
+            lookAt(target)
+            if (!hasLineOfSight(target)) {
+                this@Guardian.target = null
+            } else {
+                attackTime++
+                if (attackTime == 0) {
+                    activeTarget = target
+                    if (!isSilent) {
+                        playSoundEvent(SoundEvent.ENTITY_GUARDIAN_ATTACK, 1.0f, 1.0f)
                     }
+                } else if (attackTime >= attackDuration) {
+                    var damage = 1.0f
+
+                    if (MinecraftServer.getDifficulty() == Difficulty.HARD) {
+                        damage += 2.0f
+                    }
+
+                    if (elder) {
+                        damage += 2.0f
+                    }
+
+                    target.damage(Damage(DamageType.MOB_ATTACK, this@Guardian, this@Guardian, position, damage))
                 }
             }
 
